@@ -21,14 +21,11 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.7 var(--sans);
        -webkit-font-smoothing: antialiased; }
 main { max-width: 800px; margin: 0 auto; padding: 64px 20px 80px; }
-.eyebrow { font: 600 12px/1 var(--sans); letter-spacing: .18em; color: var(--accent); margin: 0 0 14px; }
-h1 { font: 600 40px/1.2 var(--serif); letter-spacing: .02em; margin: 0 0 12px; }
-.lead { color: var(--muted); margin: 0 0 40px; }
-.meta { display: flex; flex-wrap: wrap; gap: 20px 56px; margin: 0 0 28px; }
+h1 { font: 600 40px/1.2 var(--serif); letter-spacing: .02em; margin: 0 0 36px; }
+.meta { display: flex; flex-wrap: wrap; gap: 20px 56px; margin: 0 0 44px; }
 .meta .k { font-size: 12.5px; color: var(--muted); letter-spacing: .04em; }
 .meta .v { font: 500 24px/1.35 var(--serif); font-variant-numeric: tabular-nums; }
 .meta .v small { font: 14px var(--sans); color: var(--muted); margin-left: 4px; }
-.notice { color: var(--soft); border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 40px; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th { font: 500 12.5px var(--sans); color: var(--muted); letter-spacing: .04em; text-align: right;
      padding: 0 10px 12px; border-bottom: 1px solid var(--ink); white-space: nowrap; }
@@ -44,14 +41,20 @@ td.n { font: 17px var(--serif); color: var(--soft); }
 td.w { font: 600 19px var(--serif); color: var(--ink); }
 td.o { color: var(--muted); font-size: 13.5px; }
 .empty { font: 18px var(--serif); color: var(--muted); padding: 44px 0; text-align: center; border-bottom: 1px solid var(--line); }
-footer { margin-top: 40px; color: var(--muted); font-size: 13px; line-height: 1.8; }
-footer p { margin: 0 0 6px; }
+.info { display: grid; grid-template-columns: 3fr 2fr; gap: 24px 56px; margin-top: 48px; }
+.info h2 { font: 600 19px/1.4 var(--serif); margin: 0 0 12px; }
+.info ul { margin: 0; padding: 0; list-style: none; }
+.info li { color: var(--soft); padding: 0 0 10px 16px; position: relative; line-height: 1.75; }
+.info li::before { content: ''; position: absolute; left: 0; top: .72em; width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }
+.info .notices li::before { background: var(--accent); }
+.info .none { color: var(--muted); }
+.sync { margin-top: 36px; color: var(--muted); font-size: 13px; }
 .stale { color: var(--accent); }
 @media (max-width: 640px) {
   main { padding: 40px 16px 56px; }
-  h1 { font-size: 30px; }
-  .lead { margin-bottom: 28px; }
-  .meta { gap: 16px 32px; }
+  h1 { font-size: 30px; margin-bottom: 28px; }
+  .meta { gap: 16px 32px; margin-bottom: 36px; }
+  .info { grid-template-columns: 1fr; margin-top: 40px; }
   .meta .v { font-size: 20px; }
   .opt, .lg { display: none; }
   th { padding: 0 5px 10px; }
@@ -64,15 +67,12 @@ footer p { margin: 0 0 6px; }
 </head>
 <body>
 <main>
-  <p class="eyebrow">BW1000</p>
   <h1>模型评测排行榜</h1>
-  <p class="lead" id="rules">正在读取…</p>
   <div class="meta">
     <div><div class="k">排队 / 评测中</div><div class="v" id="queue">–</div></div>
     <div><div class="k">提交截止</div><div class="v" id="deadline">–</div></div>
     <div><div class="k">数据更新于</div><div class="v" id="updated">–</div></div>
   </div>
-  <p class="notice" id="notice" hidden></p>
   <table>
     <thead><tr>
       <th>名次</th><th class="t">队伍</th><th><span class="lg">测试</span>60例</th><th><span class="lg">测试</span>200例</th>
@@ -81,11 +81,22 @@ footer p { margin: 0 0 6px; }
     <tbody id="rows"></tbody>
   </table>
   <div class="empty" id="empty" hidden>还没有队伍完成评测</div>
-  <footer>
-    <p>加权分 = 0.2 × 测试60例 + 0.4 × 测试200例，总成绩剩下的 0.4 不在这里显示。每队只显示最好的一次。</p>
-    <p>测试60例满分 100 = 2 × 正常 + 1.5 × 主相机故障 + 1.5 × 腕部相机故障；测试200例满分 100 = 0.5 × 成功数。</p>
-    <p>页面每分钟自动刷新，平台数据每几分钟同步一次，会比平台晚几分钟。<span id="stale" class="stale"></span></p>
-  </footer>
+  <section class="info">
+    <div>
+      <h2>规则</h2>
+      <ul>
+        <li id="r-limit">每队评测次数有限，排行榜取最好的一次；被拒收和平台出错的不算次数。</li>
+        <li id="r-deadline">截止时间以平台收到提交的时间为准，截止前已经排队的会照常评完。</li>
+        <li>加权分 = 0.2 × 测试60例 + 0.4 × 测试200例，总成绩剩下的 0.4 不在这里显示。</li>
+        <li>测试60例满分 100 = 2 × 正常 + 1.5 × 主相机故障 + 1.5 × 腕部相机故障；测试200例满分 100 = 0.5 × 成功数。</li>
+      </ul>
+    </div>
+    <div>
+      <h2>公告</h2>
+      <ul class="notices" id="notices"><li class="none">暂无公告</li></ul>
+    </div>
+  </section>
+  <p class="sync">页面每分钟自动刷新，平台数据每几分钟同步一次，会比平台晚几分钟。<span id="stale" class="stale"></span></p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -93,14 +104,15 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;',
 const md = t => t ? `${+t.slice(5, 7)} 月 ${+t.slice(8, 10)} 日 ${t.slice(11, 16)}` : '–';   // "2026-12-01 14:00:00" -> "12 月 1 日 14:00"
 const short = t => t ? `${+t.slice(5, 7)}/${+t.slice(8, 10)} ${t.slice(11, 16)}` : '–';
 function render(d) {
-  $('rules').textContent = `每队总共 ${d.total_limit ?? '–'} 次评测，取最好的一次；被拒收和平台出错的不算次数。`;
+  if (d.total_limit) $('r-limit').textContent = `每队总共 ${d.total_limit} 次评测，排行榜取最好的一次；被拒收和平台出错的不算次数。`;
+  if (d.deadline) $('r-deadline').textContent = `${md(d.deadline)} 截止提交，以平台收到的时间为准；截止前已经排队的会照常评完。`;
   const q = d.queue ?? 0;
   $('queue').innerHTML = q ? `${q}<small>个</small>` : `0<small>空闲</small>`;
   $('deadline').textContent = md(d.deadline);
   $('updated').textContent = short(d.generated);
-  const n = $('notice');
-  const nt = String(d.notice || '').replace(/\s*\([^()]*\)\s*$/, '');   // the platform adds a short English version in brackets
-  if (nt) { n.textContent = nt; n.hidden = false; } else n.hidden = true;
+  const notes = String(d.notice || '').replace(/\s*\([^()]*\)\s*$/, '')   // the platform adds a short English version in brackets
+    .split(/\s*\|\s*/).filter(Boolean);                                   // several announcements: separated by " | "
+  $('notices').innerHTML = notes.length ? notes.map(t => `<li>${esc(t)}</li>`).join('') : '<li class="none">暂无公告</li>';
   const rows = d.rows || [];
   $('rows').innerHTML = rows.map(r => `<tr class="${r.rank === 1 ? 'first' : ''}">
       <td class="rank">${esc(r.rank)}</td><td class="t">${esc(String(r.team).replace(/\s*\(unregistered\)$/, ''))}</td>
