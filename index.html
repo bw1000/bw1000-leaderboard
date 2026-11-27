@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BW1000 排行榜</title>
+<link rel="stylesheet" href="fonts/noto-serif-sc.css">
+<style>
+:root {
+  --bg: #f5f4ee; --ink: #1f1e1d; --soft: #3d3c38; --muted: #77756d; --faint: #a5a39a; --line: #e2dfd5;
+  --accent: #c15f3c; --hover: #efede5;
+  --serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1f1e1d; --ink: #eeede7; --soft: #d4d2ca; --muted: #a29f96; --faint: #75736c; --line: #34332f;
+          --accent: #d97757; --hover: #282725; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.7 var(--sans);
+       -webkit-font-smoothing: antialiased; }
+main { max-width: 800px; margin: 0 auto; padding: 64px 20px 80px; }
+.eyebrow { font: 600 12px/1 var(--sans); letter-spacing: .18em; color: var(--accent); margin: 0 0 14px; }
+h1 { font: 600 40px/1.2 var(--serif); letter-spacing: .02em; margin: 0 0 12px; }
+.lead { color: var(--muted); margin: 0 0 40px; }
+.meta { display: flex; flex-wrap: wrap; gap: 20px 56px; margin: 0 0 28px; }
+.meta .k { font-size: 12.5px; color: var(--muted); letter-spacing: .04em; }
+.meta .v { font: 500 24px/1.35 var(--serif); font-variant-numeric: tabular-nums; }
+.meta .v small { font: 14px var(--sans); color: var(--muted); margin-left: 4px; }
+.notice { color: var(--soft); border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 40px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { font: 500 12.5px var(--sans); color: var(--muted); letter-spacing: .04em; text-align: right;
+     padding: 0 10px 12px; border-bottom: 1px solid var(--ink); white-space: nowrap; }
+td { padding: 16px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 0; text-align: left; }
+th:last-child, td:last-child { padding-right: 0; }
+th.t, td.t { text-align: left; }
+tbody tr:hover td { background: var(--hover); }
+td.rank { font: 500 22px/1 var(--serif); color: var(--faint); width: 52px; }
+tr.first td.rank { color: var(--accent); }
+td.t { font-weight: 500; color: var(--ink); }
+td.n { font: 17px var(--serif); color: var(--soft); }
+td.w { font: 600 19px var(--serif); color: var(--ink); }
+td.o { color: var(--muted); font-size: 13.5px; }
+.empty { font: 18px var(--serif); color: var(--muted); padding: 44px 0; text-align: center; border-bottom: 1px solid var(--line); }
+footer { margin-top: 40px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+footer p { margin: 0 0 6px; }
+.stale { color: var(--accent); }
+@media (max-width: 640px) {
+  main { padding: 40px 16px 56px; }
+  h1 { font-size: 30px; }
+  .lead { margin-bottom: 28px; }
+  .meta { gap: 16px 32px; }
+  .meta .v { font-size: 20px; }
+  .opt, .lg { display: none; }
+  th { padding: 0 5px 10px; }
+  td { padding: 14px 5px; }
+  td.rank { font-size: 19px; width: 30px; }
+  td.t { font-size: 14px; }
+  td.n { font-size: 15.5px; } td.w { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">BW1000</p>
+  <h1>模型评测排行榜</h1>
+  <p class="lead" id="rules">正在读取…</p>
+  <div class="meta">
+    <div><div class="k">排队 / 评测中</div><div class="v" id="queue">–</div></div>
+    <div><div class="k">提交截止</div><div class="v" id="deadline">–</div></div>
+    <div><div class="k">数据更新于</div><div class="v" id="updated">–</div></div>
+  </div>
+  <p class="notice" id="notice" hidden></p>
+  <table>
+    <thead><tr>
+      <th>名次</th><th class="t">队伍</th><th><span class="lg">测试</span>60例</th><th><span class="lg">测试</span>200例</th>
+      <th>加权分</th><th class="opt">K</th><th class="opt">已评次数</th><th class="opt">最好成绩收到时间</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="empty" id="empty" hidden>还没有队伍完成评测</div>
+  <footer>
+    <p>加权分 = 0.2 × 测试60例 + 0.4 × 测试200例，总成绩剩下的 0.4 不在这里显示。每队只显示最好的一次。</p>
+    <p>测试60例满分 100 = 2 × 正常 + 1.5 × 主相机故障 + 1.5 × 腕部相机故障；测试200例满分 100 = 0.5 × 成功数。</p>
+    <p>页面每分钟自动刷新，平台数据每几分钟同步一次，会比平台晚几分钟。<span id="stale" class="stale"></span></p>
+  </footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const md = t => t ? `${+t.slice(5, 7)} 月 ${+t.slice(8, 10)} 日 ${t.slice(11, 16)}` : '–';   // "2026-12-01 14:00:00" -> "12 月 1 日 14:00"
+const short = t => t ? `${+t.slice(5, 7)}/${+t.slice(8, 10)} ${t.slice(11, 16)}` : '–';
+function render(d) {
+  $('rules').textContent = `每队总共 ${d.total_limit ?? '–'} 次评测，取最好的一次；被拒收和平台出错的不算次数。`;
+  const q = d.queue ?? 0;
+  $('queue').innerHTML = q ? `${q}<small>个</small>` : `0<small>空闲</small>`;
+  $('deadline').textContent = md(d.deadline);
+  $('updated').textContent = short(d.generated);
+  const n = $('notice');
+  if (d.notice) { n.textContent = d.notice; n.hidden = false; } else n.hidden = true;
+  const rows = d.rows || [];
+  $('rows').innerHTML = rows.map(r => `<tr class="${r.rank === 1 ? 'first' : ''}">
+      <td class="rank">${esc(r.rank)}</td><td class="t">${esc(String(r.team).replace(/\s*\(unregistered\)$/, ''))}</td>
+      <td class="n">${Number(r.official).toFixed(1)}</td><td class="n">${Number(r.hidden).toFixed(1)}</td>
+      <td class="w">${Number(r.weighted).toFixed(2)}</td>
+      <td class="o opt">${esc(r.K)}</td><td class="o opt">${esc(r.subs ?? '')}</td><td class="o opt">${short(r.received)}</td></tr>`).join('');
+  $('empty').hidden = rows.length > 0;
+  const age = (Date.now() - Date.parse(String(d.generated).replace(' ', 'T') + '+08:00')) / 60000;
+  $('stale').textContent = age > 45 ? `（注意：数据已经 ${Math.round(age)} 分钟没有更新，同步可能暂停了）` : '';
+}
+async function load() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now(), {cache: 'no-store'});
+    if (r.ok) render(await r.json());
+  } catch (e) { /* keep the last view */ }
+}
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>
