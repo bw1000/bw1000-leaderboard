@@ -99,7 +99,8 @@ function render(d) {
   $('deadline').textContent = md(d.deadline);
   $('updated').textContent = short(d.generated);
   const n = $('notice');
-  if (d.notice) { n.textContent = d.notice; n.hidden = false; } else n.hidden = true;
+  const nt = String(d.notice || '').replace(/\s*\([^()]*\)\s*$/, '');   // the platform adds a short English version in brackets
+  if (nt) { n.textContent = nt; n.hidden = false; } else n.hidden = true;
   const rows = d.rows || [];
   $('rows').innerHTML = rows.map(r => `<tr class="${r.rank === 1 ? 'first' : ''}">
       <td class="rank">${esc(r.rank)}</td><td class="t">${esc(String(r.team).replace(/\s*\(unregistered\)$/, ''))}</td>
